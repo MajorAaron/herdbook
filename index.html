@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HerdBook — Multi-Species Breeding & Flock Management</title>
+<meta name="description" content="Track lineage trees, breeding logs, health records, and get AI-powered breeding advice — across chickens, goats, rabbits, and more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once unregister opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing identify alias people.set people.set_once set_config reset get_config register_for_session unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled onFeatureFlags waitForFeatureFlags getEarlyAccessFeatures on off".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+posthog.init('phc_QLq1IyOJF3FIKXvF462tepbZqLj4hHUl5j3OkXE1ReT', {api_host: 'https://us.i.posthog.com'});
+posthog.register({
+  idea_slug: 'herdbook',
+  idea_date: '2026-03-28',
+  verdict: 'TEST_IT',
+  day_constraint: 'Saturday'
+});
+</script>
+<style>
+/* =============================================
+   CSS RESET & BASE
+   ============================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --sage: #6B8F71;
+  --sage-dark: #4A6B4F;
+  --sage-light: #8FB396;
+  --sage-muted: #D4E2D6;
+  --sage-wash: #EEF4EF;
+  --cream: #FDF8F0;
+  --cream-dark: #F5EDE0;
+  --barn-red: #8B3A3A;
+  --barn-red-light: #A85050;
+  --barn-red-dark: #6E2D2D;
+  --charcoal: #2C2C2C;
+  --text: #3D3D3D;
+  --text-light: #6B6B6B;
+  --text-lighter: #999;
+  --white: #FFFFFF;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --font: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --max-w: 1120px;
+  --transition: 0.2s ease;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--cream);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button, input, textarea { font-family: inherit; font-size: inherit; }
+button { cursor: pointer; }
+
+.container {
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (min-width: 768px) {
+  .container { padding: 0 32px; }
+}
+
+/* =============================================
+   TYPOGRAPHY
+   ============================================= */
+h1, h2, h3, h4 {
+  color: var(--charcoal);
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.section-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  margin-bottom: 16px;
+}
+
+.section-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-light);
+  max-width: 560px;
+  margin: 0 auto 48px;
+}
+
+/* =============================================
+   NAVIGATION
+   ============================================= */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(253, 248, 240, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(107, 143, 113, 0.12);
+  transition: box-shadow var(--transition);
+}
+
+.nav.scrolled {
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--charcoal);
+}
+
+.nav-logo svg {
+  width: 32px;
+  height: 32px;
+}
+
+.nav-links {
+  display: none;
+  list-style: none;
+  gap: 28px;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .nav-links { display: flex; }
+}
+
+.nav-links a {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-light);
+  transition: color var(--transition);
+}
+
+.nav-links a:hover { color: var(--sage-dark); }
+
+.nav-cta {
+  display: none;
+  padding: 8px 20px;
+  background: var(--sage);
+  color: var(--white) !important;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background var(--transition), transform var(--transition);
+}
+
+@media (min-width: 768px) {
+  .nav-cta { display: inline-block; }
+}
+
+.nav-cta:hover {
+  background: var(--sage-dark);
+  transform: translateY(-1px);
+}
+
+/* =============================================
+   HERO
+   ============================================= */
+.hero {
+  padding: 100px 0 64px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .hero { padding: 120px 0 80px; }
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 900px;
+  background: radial-gradient(ellipse, rgba(107, 143, 113, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--sage-wash);
+  border: 1px solid var(--sage-muted);
+  border-radius: 100px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--sage-dark);
+  margin-bottom: 28px;
+}
+
+.hero-badge-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--sage);
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.hero h1 {
+  font-size: clamp(2.2rem, 6vw, 3.75rem);
+  line-height: 1.08;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+
+.hero h1 span {
+  display: block;
+  background: linear-gradient(135deg, var(--sage-dark), var(--sage));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  color: var(--text-light);
+  max-width: 580px;
+  margin: 0 auto 36px;
+  line-height: 1.65;
+}
+
+.hero-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 440px;
+  margin: 0 auto 20px;
+}
+
+@media (min-width: 520px) {
+  .hero-form {
+    flex-direction: row;
+    gap: 0;
+    background: var(--white);
+    border: 2px solid var(--sage-muted);
+    border-radius: var(--radius-md);
+    padding: 5px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .hero-form:focus-within {
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(107, 143, 113, 0.15);
+  }
+}
+
+.hero-form input[type="email"] {
+  flex: 1;
+  padding: 14px 16px;
+  border: 2px solid var(--sage-muted);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: 0.95rem;
+  outline: none;
+  color: var(--charcoal);
+  transition: border-color var(--transition);
+}
+
+@media (min-width: 520px) {
+  .hero-form input[type="email"] {
+    border: none;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.hero-form input[type="email"]::placeholder {
+  color: var(--text-lighter);
+}
+
+.hero-form input[type="email"]:focus {
+  border-color: var(--sage);
+}
+
+@media (min-width: 520px) {
+  .hero-form input[type="email"]:focus {
+    border-color: transparent;
+  }
+}
+
+.btn-primary {
+  padding: 12px 24px;
+  background: var(--sage);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  transition: background var(--transition), transform var(--transition);
+  position: relative;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--sage-dark);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-primary .spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: var(--white);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.btn-primary.loading .spinner { display: block; }
+.btn-primary.loading .btn-text { visibility: hidden; }
+
+@keyframes spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.form-msg {
+  font-size: 0.85rem;
+  margin-top: 8px;
+  min-height: 22px;
+  text-align: center;
+}
+
+.form-msg.success { color: var(--sage-dark); }
+.form-msg.error { color: var(--barn-red); }
+
+.hero-species {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px;
+  font-size: 0.85rem;
+  color: var(--text-lighter);
+}
+
+.hero-species-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hero-species-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* =============================================
+   SOCIAL PROOF
+   ============================================= */
+.social-proof {
+  padding: 64px 0 80px;
+  position: relative;
+}
+
+.social-proof::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sage-muted), transparent);
+}
+
+.proof-counter {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.proof-counter-number {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--sage-dark);
+}
+
+.proof-counter-number svg {
+  width: 28px;
+  height: 28px;
+  color: var(--sage);
+}
+
+.proof-counter-label {
+  font-size: 0.92rem;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+.testimonials {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .testimonials { grid-template-columns: repeat(3, 1fr); }
+}
+
+.testimonial {
+  background: var(--white);
+  border: 1px solid rgba(107, 143, 113, 0.12);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.testimonial:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.testimonial-stars {
+  color: #E8A838;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+
+.testimonial-text {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text);
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.testimonial-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--sage-wash);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.testimonial-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--charcoal);
+}
+
+.testimonial-role {
+  font-size: 0.78rem;
+  color: var(--text-lighter);
+}
+
+/* =============================================
+   FEATURES
+   ============================================= */
+.features {
+  padding: 80px 0;
+  background: var(--white);
+  position: relative;
+}
+
+.features::before,
+.features::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sage-muted), transparent);
+}
+
+.features::before { top: 0; }
+.features::after { bottom: 0; }
+
+.features-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 960px) {
+  .features-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.feature-card {
+  background: var(--cream);
+  border: 1px solid rgba(107, 143, 113, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--sage-muted);
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  font-size: 1.5rem;
+}
+
+.feature-icon.green { background: var(--sage-wash); }
+.feature-icon.red { background: rgba(139, 58, 58, 0.08); }
+.feature-icon.warm { background: rgba(232, 168, 56, 0.1); }
+
+.feature-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+/* =============================================
+   AI DEMO
+   ============================================= */
+.ai-demo {
+  padding: 80px 0;
+}
+
+.ai-demo-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.ai-demo-widget {
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--white);
+  border: 1px solid rgba(107, 143, 113, 0.15);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-demo-widget::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--sage), var(--sage-light), var(--sage));
+}
+
+.ai-demo-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--sage-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+
+.ai-demo-label svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ai-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ai-input-group input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 1.5px solid var(--sage-muted);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  outline: none;
+  background: var(--cream);
+  color: var(--charcoal);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.ai-input-group input:focus {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px rgba(107, 143, 113, 0.12);
+}
+
+.ai-input-group input::placeholder {
+  color: var(--text-lighter);
+}
+
+.ai-input-group button {
+  padding: 14px 20px;
+  background: var(--sage);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: background var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-input-group button:hover:not(:disabled) { background: var(--sage-dark); }
+.ai-input-group button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.ai-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.ai-chip {
+  padding: 7px 14px;
+  background: var(--sage-wash);
+  border: 1px solid var(--sage-muted);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  color: var(--sage-dark);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.ai-chip:hover {
+  background: var(--sage-muted);
+  border-color: var(--sage-light);
+}
+
+.ai-response {
+  display: none;
+  padding: 20px;
+  background: var(--cream);
+  border: 1px solid rgba(107, 143, 113, 0.12);
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--text);
+  min-height: 80px;
+}
+
+.ai-response.visible { display: block; }
+
+.ai-response .ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-lighter);
+}
+
+.ai-loading-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.ai-loading-dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--sage);
+  border-radius: 50%;
+  animation: ai-bounce 1.2s ease-in-out infinite;
+}
+
+.ai-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.ai-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ai-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* =============================================
+   PRICING
+   ============================================= */
+.pricing {
+  padding: 80px 0;
+  background: var(--white);
+  position: relative;
+}
+
+.pricing::before,
+.pricing::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sage-muted), transparent);
+}
+
+.pricing::before { top: 0; }
+.pricing::after { bottom: 0; }
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  max-width: 940px;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .pricing-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.pricing-card {
+  background: var(--cream);
+  border: 1.5px solid rgba(107, 143, 113, 0.12);
+  border-radius: var(--radius-xl);
+  padding: 32px 28px;
+  position: relative;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pricing-card.popular {
+  border-color: var(--sage);
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+@media (min-width: 768px) {
+  .pricing-card.popular {
+    transform: scale(1.04);
+  }
+  .pricing-card.popular:hover {
+    transform: scale(1.04) translateY(-4px);
+  }
+}
+
+.pricing-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  background: var(--sage);
+  color: var(--white);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.pricing-tier {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sage-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.pricing-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.pricing-price .amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--charcoal);
+  line-height: 1;
+}
+
+.pricing-price .period {
+  font-size: 0.9rem;
+  color: var(--text-lighter);
+}
+
+.pricing-desc {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(107, 143, 113, 0.1);
+}
+
+.pricing-features {
+  list-style: none;
+  margin-bottom: 28px;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--text);
+  padding: 6px 0;
+}
+
+.pricing-features li svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--sage);
+}
+
+.pricing-cta {
+  width: 100%;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.92rem;
+  border: none;
+  transition: all var(--transition);
+}
+
+.pricing-cta.outline {
+  background: transparent;
+  border: 1.5px solid var(--sage);
+  color: var(--sage-dark);
+}
+
+.pricing-cta.outline:hover {
+  background: var(--sage-wash);
+}
+
+.pricing-cta.filled {
+  background: var(--sage);
+  color: var(--white);
+}
+
+.pricing-cta.filled:hover {
+  background: var(--sage-dark);
+  transform: translateY(-1px);
+}
+
+.pricing-form-msg {
+  font-size: 0.82rem;
+  margin-top: 8px;
+  min-height: 20px;
+  text-align: center;
+}
+
+.pricing-form-msg.success { color: var(--sage-dark); }
+.pricing-form-msg.error { color: var(--barn-red); }
+
+/* =============================================
+   FAQ
+   ============================================= */
+.faq {
+  padding: 80px 0;
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.faq-list {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.faq-item {
+  background: var(--white);
+  border: 1px solid rgba(107, 143, 113, 0.1);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+.faq-item.open {
+  border-color: var(--sage-muted);
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.faq-question:hover { color: var(--sage-dark); }
+
+.faq-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  color: var(--sage);
+}
+
+.faq-item.open .faq-icon {
+  transform: rotate(45deg);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+}
+
+.faq-answer-inner {
+  padding: 0 22px 18px;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  line-height: 1.7;
+}
+
+/* =============================================
+   FOOTER
+   ============================================= */
+.footer {
+  padding: 64px 0 32px;
+  background: var(--charcoal);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.footer-inner {
+  text-align: center;
+}
+
+.footer-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.footer-subtitle {
+  font-size: 0.95rem;
+  margin-bottom: 28px;
+  color: rgba(255,255,255,0.5);
+}
+
+.footer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+  margin: 0 auto 40px;
+}
+
+@media (min-width: 520px) {
+  .footer-form {
+    flex-direction: row;
+    gap: 0;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md);
+    padding: 5px;
+    transition: border-color var(--transition);
+  }
+  .footer-form:focus-within {
+    border-color: var(--sage-light);
+  }
+}
+
+.footer-form input[type="email"] {
+  flex: 1;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.06);
+  color: var(--white);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+@media (min-width: 520px) {
+  .footer-form input[type="email"] {
+    border: none;
+    background: transparent;
+    padding: 12px 16px;
+  }
+}
+
+.footer-form input[type="email"]::placeholder {
+  color: rgba(255,255,255,0.35);
+}
+
+.footer-form .btn-primary {
+  background: var(--sage);
+}
+
+.footer-form .btn-primary:hover:not(:disabled) {
+  background: var(--sage-light);
+}
+
+.footer-divider {
+  width: 60px;
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  margin: 0 auto 24px;
+}
+
+.footer-tagline {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 6px;
+}
+
+.footer-copyright {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.2);
+}
+
+/* =============================================
+   UTILITIES & ANIMATIONS
+   ============================================= */
+.fade-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up { opacity: 1; transform: none; transition: none; }
+  .hero-badge-dot { animation: none; }
+  .ai-loading-dots span { animation: none; opacity: 0.6; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==========================================
+     NAVIGATION
+     ========================================== -->
+<nav class="nav" id="nav">
+  <div class="container nav-inner">
+    <a href="#" class="nav-logo">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="8" fill="#6B8F71"/>
+        <path d="M8 22V12c0-1 .5-2 1.5-2.5C11 9 13 9.5 14 11c.5-1 1.5-1.5 3-1.5s2.5.8 3 2c.5-1.2 1.5-2 3-2 2 0 3 1.5 3 3.5V22" stroke="#FDF8F0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 17h18" stroke="#FDF8F0" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+        <circle cx="11" cy="14" r="1.5" fill="#FDF8F0" opacity=".7"/>
+        <circle cx="16" cy="14" r="1.5" fill="#FDF8F0" opacity=".7"/>
+        <circle cx="21" cy="14" r="1.5" fill="#FDF8F0" opacity=".7"/>
+      </svg>
+      HerdBook
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#ai-demo">AI Assistant</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#hero" class="nav-cta">Join Waitlist</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ==========================================
+     HERO
+     ========================================== -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="fade-up">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Now accepting early access signups
+      </div>
+      <h1>
+        Track Your Flock.<br>
+        <span>Perfect Your Breeding.</span>
+      </h1>
+      <p class="hero-sub">
+        One app for lineage trees, breeding logs, health records, and AI-powered breeding advice &mdash; across chickens, goats, rabbits, and more.
+      </p>
+      <form class="hero-form" id="heroForm" novalidate>
+        <input type="email" placeholder="you@example.com" required aria-label="Email address">
+        <button type="submit" class="btn-primary">
+          <span class="spinner"></span>
+          <span class="btn-text">Join the Waitlist</span>
+        </button>
+      </form>
+      <div class="form-msg" id="heroMsg"></div>
+      <div class="hero-species">
+        <span class="hero-species-item"><span class="hero-species-icon">&#x1F414;</span> Chickens</span>
+        <span class="hero-species-item"><span class="hero-species-icon">&#x1F410;</span> Goats</span>
+        <span class="hero-species-item"><span class="hero-species-icon">&#x1F407;</span> Rabbits</span>
+        <span class="hero-species-item"><span class="hero-species-icon">&#x1F986;</span> Ducks</span>
+        <span class="hero-species-item"><span class="hero-species-icon">&#x1F404;</span> Cattle</span>
+        <span class="hero-species-item"><span class="hero-species-icon">&#x1F415;</span> Dogs</span>
+        <span class="hero-species-item"><span class="hero-species-icon">+</span> More</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     SOCIAL PROOF
+     ========================================== -->
+<section class="social-proof">
+  <div class="container">
+    <div class="proof-counter fade-up">
+      <div class="proof-counter-number">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        247 breeders waiting
+      </div>
+      <p class="proof-counter-label">Join hobby farmers and backyard breeders building better flocks</p>
+    </div>
+    <div class="testimonials">
+      <div class="testimonial fade-up">
+        <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="testimonial-text">"I've been tracking my 40+ hens in a Google Sheet for three years. HerdBook finally gives me a tool that actually understands breeding pairs and egg production. Can't wait for launch."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">&#x1F414;</div>
+          <div>
+            <div class="testimonial-name">Sarah T.</div>
+            <div class="testimonial-role">Backyard chicken breeder, Oregon</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial fade-up">
+        <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="testimonial-text">"Lineage tracking is everything for Boer goats. I need to know three generations back before pairing, and right now I'm doing it in my head. HerdBook is the tool I've been looking for."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">&#x1F410;</div>
+          <div>
+            <div class="testimonial-name">Marcus R.</div>
+            <div class="testimonial-role">Boer goat breeder, Texas</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial fade-up">
+        <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="testimonial-text">"Between our Khaki Campbells and Runners, keeping track of breeding windows and incubation dates was a nightmare. The breeding calendar feature alone is worth signing up for."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">&#x1F986;</div>
+          <div>
+            <div class="testimonial-name">Lisa &amp; Dave K.</div>
+            <div class="testimonial-role">Heritage duck farm, Vermont</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     FEATURES
+     ========================================== -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="features-header fade-up">
+      <span class="section-label">Features</span>
+      <h2 class="section-title">Everything your flock needs.<br>Nothing it doesn't.</h2>
+      <p class="section-subtitle">Built for hobby farmers who care about their animals and want to breed smarter, not harder.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card fade-up">
+        <div class="feature-icon green">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1"/>
+            <line x1="9" y1="12" x2="15" y2="12"/>
+            <line x1="9" y1="16" x2="13" y2="16"/>
+          </svg>
+        </div>
+        <h3>Animal Registry</h3>
+        <p>Add every animal with breed, photos, band or tag numbers, birthdate, and notes. Filter and search your whole flock in seconds.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon green">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="3"/>
+            <circle cx="6" cy="13" r="2.5"/>
+            <circle cx="18" cy="13" r="2.5"/>
+            <line x1="10" y1="7.5" x2="7.5" y2="11"/>
+            <line x1="14" y1="7.5" x2="16.5" y2="11"/>
+            <circle cx="3" cy="20" r="2"/>
+            <circle cx="9" cy="20" r="2"/>
+            <circle cx="15" cy="20" r="2"/>
+            <circle cx="21" cy="20" r="2"/>
+            <line x1="5" y1="15" x2="3.5" y2="18.5"/>
+            <line x1="7" y1="15" x2="8.5" y2="18.5"/>
+            <line x1="17" y1="15" x2="15.5" y2="18.5"/>
+            <line x1="19" y1="15" x2="20.5" y2="18.5"/>
+          </svg>
+        </div>
+        <h3>Lineage Trees</h3>
+        <p>Visual pedigree charts up to 5 generations deep. See exactly who begat whom and spot inbreeding risks before they happen.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon red">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B3A3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
+        <h3>Breeding Log</h3>
+        <p>Record pairings, track incubation and gestation periods, and get reminders when hatch day or kidding is approaching.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon green">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <h3>Health Records</h3>
+        <p>Track vaccinations, treatments, vet visits, and weight over time. Set reminders for recurring treatments so nothing slips through.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon warm">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4882E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="16" rx="8" ry="5"/>
+            <ellipse cx="12" cy="16" rx="3" ry="2" opacity=".5"/>
+            <path d="M12 11V7"/>
+            <path d="M9 8.5C9 6 10.3 4 12 4s3 2 3 4.5"/>
+          </svg>
+        </div>
+        <h3>Hatch &amp; Kidding Tracker</h3>
+        <p>Log clutch sizes, hatch rates, and mortality. Track which pairings produce the healthiest offspring over time.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon green">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a5 5 0 0 1 5 5c0 2-1.5 3.5-3 4.5V13H10v-1.5C8.5 10.5 7 9 7 7a5 5 0 0 1 5-5z"/>
+            <rect x="10" y="13" width="4" height="3" rx="1"/>
+            <line x1="10" y1="18" x2="14" y2="18"/>
+            <line x1="11" y1="20" x2="13" y2="20"/>
+            <path d="M9 9h.01M15 9h.01" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <h3>AI Breeding Assistant</h3>
+        <p>Ask questions about your flock and get genetics-informed breeding suggestions. "Which rooster gives the best olive eggers?"</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     AI DEMO
+     ========================================== -->
+<section class="ai-demo" id="ai-demo">
+  <div class="container">
+    <div class="ai-demo-header fade-up">
+      <span class="section-label">AI-Powered</span>
+      <h2 class="section-title">Ask your flock anything.</h2>
+      <p class="section-subtitle">The AI Breeding Assistant knows genetics, breed standards, and your animals' history to give breeding advice that actually makes sense.</p>
+    </div>
+    <div class="ai-demo-widget fade-up">
+      <div class="ai-demo-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        AI Breeding Assistant
+      </div>
+      <div class="ai-input-group">
+        <input type="text" id="aiInput" placeholder="Which hens should I pair for olive eggers?" aria-label="Ask the AI breeding assistant">
+        <button id="aiSubmit" type="button">
+          Ask
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+      <div class="ai-chips">
+        <button class="ai-chip" type="button">Which hens should I pair for olive eggers?</button>
+        <button class="ai-chip" type="button">Best breeding age for Nigerian Dwarf goats?</button>
+        <button class="ai-chip" type="button">How do I improve hatch rates?</button>
+        <button class="ai-chip" type="button">Is this pairing too inbred?</button>
+      </div>
+      <div class="ai-response" id="aiResponse"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     PRICING
+     ========================================== -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="pricing-header fade-up">
+      <span class="section-label">Pricing</span>
+      <h2 class="section-title">Start free. Grow when you're ready.</h2>
+      <p class="section-subtitle">No contracts, no hidden fees. Cancel anytime. Your data is always yours.</p>
+    </div>
+    <div class="pricing-grid">
+      <!-- Free Tier -->
+      <div class="pricing-card fade-up">
+        <div class="pricing-tier">Free</div>
+        <div class="pricing-price">
+          <span class="amount">$0</span>
+          <span class="period">/month</span>
+        </div>
+        <p class="pricing-desc">Perfect for getting started with a small flock.</p>
+        <ul class="pricing-features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Up to 5 animals
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Basic animal registry
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Health records
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Mobile-friendly
+          </li>
+        </ul>
+        <button class="pricing-cta outline" data-tier="free" onclick="handlePricingCTA(this, 'free')">Join Waitlist</button>
+        <div class="pricing-form-msg" data-tier-msg="free"></div>
+      </div>
+      <!-- Starter Tier -->
+      <div class="pricing-card popular fade-up">
+        <div class="pricing-badge">Most Popular</div>
+        <div class="pricing-tier">Starter</div>
+        <div class="pricing-price">
+          <span class="amount">$4.99</span>
+          <span class="period">/month</span>
+        </div>
+        <p class="pricing-desc">Everything you need for a serious breeding program.</p>
+        <ul class="pricing-features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Up to 25 animals
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Lineage trees (5 gen.)
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Breeding log &amp; calendar
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Hatch &amp; kidding reminders
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Health records &amp; treatments
+          </li>
+        </ul>
+        <button class="pricing-cta filled" data-tier="starter" onclick="handlePricingCTA(this, 'starter')">Join Waitlist</button>
+        <div class="pricing-form-msg" data-tier-msg="starter"></div>
+      </div>
+      <!-- Pro Tier -->
+      <div class="pricing-card fade-up">
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-price">
+          <span class="amount">$9.99</span>
+          <span class="period">/month</span>
+        </div>
+        <p class="pricing-desc">For the serious breeder with big ambitions.</p>
+        <ul class="pricing-features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Unlimited animals
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            AI Breeding Assistant
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Export pedigree PDFs
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Multi-farm support
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Everything in Starter
+          </li>
+        </ul>
+        <button class="pricing-cta outline" data-tier="pro" onclick="handlePricingCTA(this, 'pro')">Join Waitlist</button>
+        <div class="pricing-form-msg" data-tier-msg="pro"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     FAQ
+     ========================================== -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="faq-header fade-up">
+      <span class="section-label">FAQ</span>
+      <h2 class="section-title">Common questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item fade-up" data-faq="0">
+        <button class="faq-question" aria-expanded="false">
+          What species does HerdBook support?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            HerdBook works with any species you raise. We have built-in support for chickens, goats, rabbits, ducks, quail, dogs, and cattle &mdash; with species-specific fields like egg color, horn status, and fiber type. You can also add any custom species with your own tracking fields.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item fade-up" data-faq="1">
+        <button class="faq-question" aria-expanded="false">
+          Can I import my existing records?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Yes! HerdBook supports CSV import so you can bring in your existing spreadsheets, plus manual entry for adding animals one by one. We provide import templates and a step-by-step guide to make the transition painless.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item fade-up" data-faq="2">
+        <button class="faq-question" aria-expanded="false">
+          How does the AI breeding assistant work?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            The AI assistant is powered by Gemini AI and trained on breeding genetics, breed standards, and your herd's data. Ask it questions like "Which rooster gives the best olive eggers?" or "Is this pairing too inbred?" and get actionable, genetics-informed advice specific to your animals.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item fade-up" data-faq="3">
+        <button class="faq-question" aria-expanded="false">
+          Is my data secure?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Absolutely. All data is encrypted in transit and at rest, backed up daily to redundant servers, and you own every bit of it. You can export your full dataset at any time. We will never sell or share your information.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item fade-up" data-faq="4">
+        <button class="faq-question" aria-expanded="false">
+          Can I use HerdBook on my phone?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Yes &mdash; HerdBook is fully mobile-responsive and works great on any phone, tablet, or desktop browser. Log breeding observations from the barn, check lineage from your truck, or review health records from the vet's office. No app download needed.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     FOOTER
+     ========================================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <h2 class="footer-title">Ready to breed smarter?</h2>
+      <p class="footer-subtitle">Join 247 breeders on the waitlist. We'll let you know when HerdBook is ready.</p>
+      <form class="footer-form" id="footerForm" novalidate>
+        <input type="email" placeholder="you@example.com" required aria-label="Email address">
+        <button type="submit" class="btn-primary">
+          <span class="spinner"></span>
+          <span class="btn-text">Join Waitlist</span>
+        </button>
+      </form>
+      <div class="form-msg" id="footerMsg"></div>
+      <div class="footer-divider"></div>
+      <p class="footer-tagline">Made with coffee in Colorado</p>
+      <p class="footer-copyright">&copy; 2026 HerdBook. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ==========================================
+     JAVASCRIPT
+     ========================================== -->
+<script>
+(function() {
+  'use strict';
+
+  // ----------------------------------------
+  // Utility: validate email
+  // ----------------------------------------
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // ----------------------------------------
+  // Utility: show form message
+  // ----------------------------------------
+  function showMsg(el, text, type) {
+    el.textContent = text;
+    el.className = 'form-msg ' + type;
+    if (el.classList.contains('pricing-form-msg')) {
+      el.className = 'pricing-form-msg ' + type;
+    }
+  }
+
+  // ----------------------------------------
+  // Navigation scroll effect
+  // ----------------------------------------
+  var nav = document.getElementById('nav');
+  var scrollTicking = false;
+  window.addEventListener('scroll', function() {
+    if (!scrollTicking) {
+      requestAnimationFrame(function() {
+        nav.classList.toggle('scrolled', window.scrollY > 20);
+        scrollTicking = false;
+      });
+      scrollTicking = true;
+    }
+  }, { passive: true });
+
+  // ----------------------------------------
+  // Scroll animations (Intersection Observer)
+  // ----------------------------------------
+  var fadeEls = document.querySelectorAll('.fade-up');
+  if ('IntersectionObserver' in window) {
+    var fadeObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          fadeObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    fadeEls.forEach(function(el) { fadeObserver.observe(el); });
+  } else {
+    fadeEls.forEach(function(el) { el.classList.add('visible'); });
+  }
+
+  // ----------------------------------------
+  // PostHog: pricing_tier_view on scroll
+  // ----------------------------------------
+  var pricingSection = document.getElementById('pricing');
+  var pricingViewed = false;
+  if ('IntersectionObserver' in window && pricingSection) {
+    var pricingObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && !pricingViewed) {
+          pricingViewed = true;
+          if (window.posthog) {
+            window.posthog.capture('pricing_tier_view');
+          }
+          pricingObserver.unobserve(pricingSection);
+        }
+      });
+    }, { threshold: 0.3 });
+    pricingObserver.observe(pricingSection);
+  }
+
+  // ----------------------------------------
+  // Waitlist form submission handler
+  // ----------------------------------------
+  function handleWaitlistSubmit(form, msgEl, source) {
+    var input = form.querySelector('input[type="email"]');
+    var btn = form.querySelector('.btn-primary');
+    var email = input.value.trim();
+
+    if (!email || !isValidEmail(email)) {
+      showMsg(msgEl, 'Please enter a valid email address.', 'error');
+      input.focus();
+      return;
+    }
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    showMsg(msgEl, '', '');
+
+    fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, source: source })
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Server error');
+      return res.json();
+    })
+    .then(function() {
+      showMsg(msgEl, 'You\'re on the list! We\'ll be in touch soon.', 'success');
+      input.value = '';
+      if (window.posthog) {
+        window.posthog.capture('waitlist_signup', { source: source });
+      }
+    })
+    .catch(function() {
+      showMsg(msgEl, 'Something went wrong. Please try again.', 'error');
+    })
+    .finally(function() {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    });
+  }
+
+  // Hero form
+  var heroForm = document.getElementById('heroForm');
+  var heroMsg = document.getElementById('heroMsg');
+  heroForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    handleWaitlistSubmit(heroForm, heroMsg, 'hero');
+  });
+
+  // Footer form
+  var footerForm = document.getElementById('footerForm');
+  var footerMsg = document.getElementById('footerMsg');
+  footerForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    handleWaitlistSubmit(footerForm, footerMsg, 'footer');
+  });
+
+  // ----------------------------------------
+  // Pricing CTA handler
+  // ----------------------------------------
+  window.handlePricingCTA = function(btn, tier) {
+    var email = window.prompt('Enter your email to join the ' + tier.charAt(0).toUpperCase() + tier.slice(1) + ' waitlist:');
+    var msgEl = document.querySelector('[data-tier-msg="' + tier + '"]');
+
+    if (!email) return;
+    email = email.trim();
+
+    if (!isValidEmail(email)) {
+      if (msgEl) showMsg(msgEl, 'Please enter a valid email address.', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Joining...';
+    if (msgEl) showMsg(msgEl, '', '');
+
+    fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, source: 'pricing' })
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Server error');
+      return res.json();
+    })
+    .then(function() {
+      if (msgEl) showMsg(msgEl, 'You\'re on the list!', 'success');
+      if (window.posthog) {
+        window.posthog.capture('waitlist_signup', { source: 'pricing', tier: tier });
+      }
+    })
+    .catch(function() {
+      if (msgEl) showMsg(msgEl, 'Something went wrong. Try again.', 'error');
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Join Waitlist';
+    });
+  };
+
+  // ----------------------------------------
+  // FAQ accordion
+  // ----------------------------------------
+  var faqItems = document.querySelectorAll('.faq-item');
+  faqItems.forEach(function(item) {
+    var question = item.querySelector('.faq-question');
+    var answer = item.querySelector('.faq-answer');
+    var index = parseInt(item.getAttribute('data-faq'), 10);
+
+    question.addEventListener('click', function() {
+      var isOpen = item.classList.contains('open');
+
+      // Close all
+      faqItems.forEach(function(other) {
+        other.classList.remove('open');
+        other.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+        other.querySelector('.faq-answer').style.maxHeight = null;
+      });
+
+      // Toggle current
+      if (!isOpen) {
+        item.classList.add('open');
+        question.setAttribute('aria-expanded', 'true');
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+
+        if (window.posthog) {
+          window.posthog.capture('faq_expand', { question_index: index });
+        }
+      }
+    });
+  });
+
+  // ----------------------------------------
+  // AI Demo
+  // ----------------------------------------
+  var aiInput = document.getElementById('aiInput');
+  var aiSubmit = document.getElementById('aiSubmit');
+  var aiResponse = document.getElementById('aiResponse');
+  var aiChips = document.querySelectorAll('.ai-chip');
+
+  function submitAI() {
+    var prompt = aiInput.value.trim();
+    if (!prompt) {
+      aiInput.focus();
+      return;
+    }
+
+    aiSubmit.disabled = true;
+    aiResponse.classList.add('visible');
+    aiResponse.innerHTML = '<div class="ai-loading"><div class="ai-loading-dots"><span></span><span></span><span></span></div> Thinking...</div>';
+
+    fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt })
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Server error');
+      return res.json();
+    })
+    .then(function(data) {
+      aiResponse.textContent = data.response || data.message || 'Here is my suggestion based on your flock data...';
+    })
+    .catch(function() {
+      aiResponse.innerHTML = '<em style="color:var(--text-lighter)">The AI assistant is warming up for launch. Join the waitlist to be first in line!</em>';
+    })
+    .finally(function() {
+      aiSubmit.disabled = false;
+    });
+  }
+
+  aiSubmit.addEventListener('click', submitAI);
+  aiInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitAI();
+    }
+  });
+
+  aiChips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      aiInput.value = chip.textContent;
+      submitAI();
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
