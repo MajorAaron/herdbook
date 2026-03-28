@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://herdbook.majorsolutions.biz/sitemap.xml
